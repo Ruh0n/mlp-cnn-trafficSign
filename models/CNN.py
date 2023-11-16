@@ -63,7 +63,8 @@ class CNN:
         )
         self.params["b1"] = np.zeros(filter_num)
         self.params["W2"] = weight_init_std * rgen.logistic(
-            size=(pool_output_size, hidden_size)
+            # size=(pool_output_size, hidden_size)
+            size=(int(filter_num * (conv_output_size ** 2)), hidden_size)
         )
         self.params["b2"] = np.zeros(hidden_size)
         self.params["W3"] = weight_init_std * rgen.logistic(
@@ -84,7 +85,7 @@ class CNN:
             conv_param["pad"],
         )
         self.layers["Relu1"] = Relu()
-        self.layers["Pool1"] = Pooling(pool_h=2, pool_w=2, stride=2)
+        # self.layers["Pool1"] = Pooling(pool_h=2, pool_w=2, stride=2)
         self.layers["Affine1"] = Affine(self.params["W2"], self.params["b2"])
         self.layers["Relu2"] = Relu()
         self.layers["Affine2"] = Affine(self.params["W3"], self.params["b3"])

@@ -150,13 +150,13 @@ class BatchNormalization:
             N, D = x.shape
             self.running_mean = torch.zeros(D)
             self.running_var = torch.zeros(D)
-            #위의 두 줄 기존 np.zeros(D) 텐서 대응
+            # 위의 두 줄 기존 np.zeros(D) 텐서 대응
 
         if train_flg:
             mu = x.mean(axis=0)
             xc = x - mu
-            var = torch.mean(xc**2, dim=0)  # np.mean(xc**2, axis=0)
-            std = torch.sqrt(var + 10e-7)   # np.sqrt(var + 10e-7)
+            var = torch.mean(xc ** 2, dim=0)  # np.mean(xc**2, axis=0)
+            std = torch.sqrt(var + 10e-7)  # np.sqrt(var + 10e-7)
             xn = xc / std
 
             self.batch_size = x.shape[0]
@@ -164,14 +164,14 @@ class BatchNormalization:
             self.xn = xn
             self.std = std
             self.running_mean = (
-                self.momentum * self.running_mean + (1 - self.momentum) * mu
+                    self.momentum * self.running_mean + (1 - self.momentum) * mu
             )
             self.running_var = (
-                self.momentum * self.running_var + (1 - self.momentum) * var
+                    self.momentum * self.running_var + (1 - self.momentum) * var
             )
         else:
             xc = x - self.running_mean
-            xn = xc / ((torch.sqrt(self.running_var + 10e-7))) #np.sqrt
+            xn = xc / ((torch.sqrt(self.running_var + 10e-7)))  # np.sqrt
 
         out = self.gamma * xn + self.beta
         return out
@@ -188,14 +188,14 @@ class BatchNormalization:
 
     def __backward(self, dout):
         dbeta = dout.sum(axis=0)
-        dgamma = torch.sum(self.xn * dout, dim=0)     #np.sum(self.xn * dout, axis=0)
+        dgamma = torch.sum(self.xn * dout, dim=0)  # np.sum(self.xn * dout, axis=0)
         dxn = self.gamma * dout
         dxc = dxn / self.std
-        dstd = -torch.sum((dxn * self.xc) / (self.std * self.std), dim=0)  
-            #-np.sum((dxn * self.xc) / (self.std * self.std), axis=0)
+        dstd = -torch.sum((dxn * self.xc) / (self.std * self.std), dim=0)
+        # -np.sum((dxn * self.xc) / (self.std * self.std), axis=0)
         dvar = 0.5 * dstd / self.std
         dxc += (2.0 / self.batch_size) * self.xc * dvar
-        dmu = torch.sum(dxc, dim=0)                     #np.sum(dxc, axis=0)
+        dmu = torch.sum(dxc, dim=0)  # np.sum(dxc, axis=0)
         dx = dxc - dmu / self.batch_size
 
         self.dgamma = dgamma
@@ -243,10 +243,10 @@ class Convolution:
         dout = dout.permute(0, 2, 3, 1).reshape(-1, FN)
 
         self.db = torch.sum(dout, dim=0)
-        self.dW = torch.matmul(self.col.T, dout)
+        self.dW = torch.matmul(self.col.T.type_as(dout), dout)
         self.dW = self.dW.transpose(1, 0).reshape(FN, C, FH, FW)
 
-        dcol = torch.matmul(dout, self.col_W.T)
+        dcol = torch.matmul(dout, self.col_W.T.type_as(dout))
         dx = col2im(dcol, self.x.shape, FH, FW, self.stride, self.pad)
 
         return dx
